@@ -11,14 +11,17 @@ public class AuthController {
 
     private final UserService userService;
 
-    // Явний конструктор замість Lombok
     public AuthController(UserService userService) {
         this.userService = userService;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@RequestBody User user) {
-        userService.registerUser(user);
-        return ResponseEntity.ok("User registered successfully!");
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
+        if (userService.findByUsername(user.getUsername()).isPresent()) {
+            return ResponseEntity.badRequest().body("❌ User already exists!");
+        }
+
+        User newUser = userService.registerUser(user);
+        return ResponseEntity.ok("✅ User '" + newUser.getUsername() + "' registered successfully!");
     }
 }
