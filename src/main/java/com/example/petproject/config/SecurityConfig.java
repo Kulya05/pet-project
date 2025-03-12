@@ -1,16 +1,24 @@
 package com.example.petproject.config;
 
+import com.example.petproject.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
+
+    private final CustomUserDetailsService userDetailsService;
+
+    public SecurityConfig(CustomUserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -25,13 +33,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Вимикаємо CSRF для API
+                .csrf(csrf -> csrf.disable()) // Вимикаємо CSRF
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll() // ✅ Дозволяємо реєстрацію та логін без авторизації
-                        .anyRequest().authenticated() // ❗ Усі інші запити вимагають аутентифікації
+                        .requestMatchers("/api/auth/**").permitAll() // Дозволяємо реєстрацію/логін
+                        .anyRequest().authenticated() // Інші запити потребують авторизації
                 )
-                .formLogin(login -> login.disable()) // Вимикаємо форму логіна (користуємось API)
-                .httpBasic(httpBasic -> httpBasic.disable()); // Вимикаємо Basic Auth (якщо використовуєш JWT)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT
+                .httpBasic(httpBasic -> httpBasic.disable()); // Вимикаємо Basic Auth
 
         return http.build();
     }
